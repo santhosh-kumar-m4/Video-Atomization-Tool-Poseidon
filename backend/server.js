@@ -15,7 +15,7 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'Video Atomization API is running' });
 });
 
-// test db connection
+// db health check
 app.get('/api/health/db', async (req, res) => {
   try {
     const pool = require('./src/config');
