@@ -26,10 +26,12 @@ app.get('/api/health/db', async (req, res) => {
 const videoRoutes = require('./src/routes/videos');
 const transcriptRoutes = require('./src/routes/transcripts');
 const momentRoutes = require('./src/routes/moments');
+const clipRoutes = require('./src/routes/clips');
 
 app.use('/api/videos', videoRoutes);
 app.use('/api/transcripts', transcriptRoutes);
 app.use('/api/moments', momentRoutes);
+app.use('/api/clips', clipRoutes);
 
 
 app.listen(PORT, () => {
