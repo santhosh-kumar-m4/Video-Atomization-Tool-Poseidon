@@ -84,4 +84,44 @@ router.get('/:id', async (req, res) => {
   }
 });
 
+router.delete('/:id', async (req, res) => {
+  try {
+    const videoId = parseInt(req.params.id);
+
+    const result = await pool.query(
+      'SELECT * FROM videos WHERE id = $1',
+      [videoId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Video not found' });
+    }
+
+    const video = result.rows[0];
+    const filePath = video.file_path;
+
+    if (fs.existsSync(filePath)) {
+      try {
+        fs.unlinkSync(filePath);
+      } catch (fileError) {
+        console.error('Error deleting file:', fileError);
+      }
+    }
+
+    await pool.query('DELETE FROM videos WHERE id = $1', [videoId]);
+
+    res.json({
+      success: true,
+      message: 'Video deleted successfully'
+    });
+
+  } catch (error) {
+    console.error('Error deleting video:', error);
+    res.status(500).json({
+      error: 'Failed to delete video',
+      message: error.message
+    });
+  }
+});
+
 module.exports = router;
