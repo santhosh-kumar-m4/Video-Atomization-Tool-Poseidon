@@ -26,7 +26,10 @@ app.get('/api/health/db', async (req, res) => {
   }
 });
 
-// TODO: video upload endpoint
+// routes
+const videoRoutes = require('./src/routes/videos');
+app.use('/api/videos', videoRoutes);
+
 // TODO: transcript generation
 // TODO: clip generation with ffmpeg
 
