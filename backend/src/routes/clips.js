@@ -12,32 +12,22 @@ router.post('/:videoId/generate', async (req, res) => {
       return res.status(404).json({ error: 'Video not found' });
     }
 
-    const clipsResult = await pool.query(
-      'SELECT * FROM clips WHERE video_id = $1',
-      [videoId]
-    );
-
+    const clipsResult = await pool.query('SELECT * FROM clips WHERE video_id = $1', [videoId]);
     if (clipsResult.rows.length === 0) {
-      return res.status(400).json({ 
-        error: 'No clips found',
-        message: 'Please detect moments first'
-      });
+      return res.status(400).json({ error: 'No clips found' });
     }
 
     const results = await clipService.generateAllClips(videoId);
+    const generatedCount = results.filter(r => r.status === 'generated').length;
 
     res.json({
       success: true,
       results: results,
-      message: `Generated ${results.filter(r => r.status === 'generated').length} clips`
+      message: `Generated ${generatedCount} clips`
     });
-
   } catch (error) {
     console.error('Error generating clips:', error);
-    res.status(500).json({
-      error: 'Failed to generate clips',
-      message: error.message
-    });
+    res.status(500).json({ error: 'Failed to generate clips', message: error.message });
   }
 });
 
@@ -51,7 +41,6 @@ router.post('/:clipId/generate-one', async (req, res) => {
     }
 
     const clip = clipResult.rows[0];
-
     if (clip.horizontal_path && clip.vertical_path) {
       return res.json({
         success: true,
@@ -82,36 +71,22 @@ router.post('/:clipId/generate-one', async (req, res) => {
       paths: paths,
       message: 'Clip generated successfully'
     });
-
   } catch (error) {
     console.error('Error generating clip:', error);
-    res.status(500).json({
-      error: 'Failed to generate clip',
-      message: error.message
-    });
+    res.status(500).json({ error: 'Failed to generate clip', message: error.message });
   }
 });
 
 router.get('/:videoId', async (req, res) => {
   try {
     const videoId = parseInt(req.params.videoId);
-
     const result = await pool.query(
       'SELECT * FROM clips WHERE video_id = $1 ORDER BY start_time ASC',
       [videoId]
     );
-
-    res.json({
-      success: true,
-      clips: result.rows
-    });
-
+    res.json({ success: true, clips: result.rows });
   } catch (error) {
-    console.error('Error fetching clips:', error);
-    res.status(500).json({
-      error: 'Failed to fetch clips',
-      message: error.message
-    });
+    res.status(500).json({ error: 'Failed to fetch clips' });
   }
 });
 

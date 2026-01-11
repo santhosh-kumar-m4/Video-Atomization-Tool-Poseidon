@@ -85,21 +85,14 @@ async function generateTranscript(videoId, videoPath) {
 }
 
 async function getTranscript(videoId) {
-  try {
-    const result = await pool.query(
-      'SELECT * FROM transcripts WHERE video_id = $1 ORDER BY created_at DESC LIMIT 1',
-      [videoId]
-    );
-
-    if (result.rows.length === 0) {
-      return null;
-    }
-
-    return result.rows[0];
-  } catch (error) {
-    console.error('Error fetching transcript:', error);
-    throw error;
+  const result = await pool.query(
+    'SELECT * FROM transcripts WHERE video_id = $1 ORDER BY created_at DESC LIMIT 1',
+    [videoId]
+  );
+  if (result.rows.length === 0) {
+    return null;
   }
+  return result.rows[0];
 }
 
 module.exports = {

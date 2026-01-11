@@ -43,24 +43,13 @@ router.post('/:videoId/generate', async (req, res) => {
 router.get('/:videoId', async (req, res) => {
   try {
     const videoId = parseInt(req.params.videoId);
-
     const transcript = await transcriptService.getTranscript(videoId);
-
     if (!transcript) {
       return res.status(404).json({ error: 'Transcript not found' });
     }
-
-    res.json({
-      success: true,
-      transcript: transcript
-    });
-
+    res.json({ success: true, transcript: transcript });
   } catch (error) {
-    console.error('Error fetching transcript:', error);
-    res.status(500).json({
-      error: 'Failed to fetch transcript',
-      message: error.message
-    });
+    res.status(500).json({ error: 'Failed to fetch transcript' });
   }
 });
 
