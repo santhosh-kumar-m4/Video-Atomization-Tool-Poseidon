@@ -15,7 +15,6 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'Video Atomization API is running' });
 });
 
-// db health check
 app.get('/api/health/db', async (req, res) => {
   try {
     const pool = require('./src/config');
@@ -26,12 +25,12 @@ app.get('/api/health/db', async (req, res) => {
   }
 });
 
-// routes
 const videoRoutes = require('./src/routes/videos');
-app.use('/api/videos', videoRoutes);
+const transcriptRoutes = require('./src/routes/transcripts');
 
-// TODO: transcript generation
-// TODO: clip generation with ffmpeg
+app.use('/api/videos', videoRoutes);
+app.use('/api/transcripts', transcriptRoutes);
+
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
