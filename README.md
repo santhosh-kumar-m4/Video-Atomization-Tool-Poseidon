@@ -32,7 +32,59 @@ Video-Atomization-Tool-Poseidon/
 
 ## Setup Instructions
 
-Coming soon - still setting up the project structure
+### Prerequisites
+- Node.js (v18+)
+- PostgreSQL database (or use Neon for cloud setup)
+- ffmpeg installed on your system
+- OpenAI API key
+
+### Backend Setup
+
+1. Navigate to backend directory:
+```bash
+cd backend
+```
+
+2. Install dependencies:
+```bash
+npm install
+```
+
+3. Create `.env` file (copy from `.env.example`):
+```bash
+PORT=3000
+DATABASE_URL=postgresql://user:password@localhost:5432/video_atomization
+OPENAI_API_KEY=your_openai_api_key_here
+UPLOAD_DIR=./uploads
+CLIPS_DIR=./clips
+```
+
+4. Initialize database:
+```bash
+npm run db:init
+```
+
+5. Start the server:
+```bash
+npm run dev
+```
+
+### Frontend Setup
+
+1. Navigate to frontend directory:
+```bash
+cd video-atomization-frontend
+```
+
+2. Install dependencies:
+```bash
+npm install
+```
+
+3. Start development server:
+```bash
+npm start
+```
 
 ## Architecture
 
