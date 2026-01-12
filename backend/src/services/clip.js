@@ -24,7 +24,6 @@ async function generateClip(clipId, videoPath, startTime, endTime, title) {
   const hPath = path.join(clipsDir, hFile);
   const vPath = path.join(clipsDir, vFile);
 
-  // horizontal clip
   await new Promise((resolve, reject) => {
     ffmpeg(videoPath)
       .setStartTime(startTime)
@@ -41,7 +40,6 @@ async function generateClip(clipId, videoPath, startTime, endTime, title) {
       .run();
   });
 
-  // vertical clip
   await new Promise((resolve, reject) => {
     ffmpeg(videoPath)
       .setStartTime(startTime)

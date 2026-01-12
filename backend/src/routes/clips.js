@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const clipService = require('../services/clip');
 const pool = require('../config');
+const fs = require('fs');
+const path = require('path');
 
 router.post('/:videoId/generate', async (req, res) => {
   try {
@@ -111,12 +113,10 @@ router.get('/:clipId/download/:format', async (req, res) => {
       return res.status(404).json({ error: 'Clip file not generated yet' });
     }
 
-    const fs = require('fs');
     if (!fs.existsSync(filePath)) {
       return res.status(404).json({ error: 'Clip file not found' });
     }
 
-    const path = require('path');
     const fileName = path.basename(filePath);
     
     res.download(filePath, fileName, (err) => {

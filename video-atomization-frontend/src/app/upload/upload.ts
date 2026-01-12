@@ -2,6 +2,7 @@ import { Component, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpEventType } from '@angular/common/http';
 import { Router, RouterModule } from '@angular/router';
+import { environment } from '../../environments/environment';
 
 @Component({
   selector: 'app-upload',
@@ -10,7 +11,7 @@ import { Router, RouterModule } from '@angular/router';
   styleUrl: './upload.css',
 })
 export class Upload {
-  private apiUrl = 'http://localhost:3000/api'; // TODO: move to env config
+  private apiUrl = environment.apiUrl;
   private router = inject(Router);
   
   isDragging = signal(false);
@@ -53,7 +54,6 @@ export class Upload {
   }
 
   handleFile(file: File) {
-    // basic validation
     if (!file.type.startsWith('video/')) {
       this.uploadError.set('Please select a video file');
       return;

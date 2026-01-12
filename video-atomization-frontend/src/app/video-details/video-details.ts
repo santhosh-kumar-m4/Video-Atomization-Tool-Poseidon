@@ -2,6 +2,7 @@ import { Component, signal, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { Router, ActivatedRoute, RouterModule } from '@angular/router';
+import { environment } from '../../environments/environment';
 
 interface Video {
   id: number;
@@ -46,7 +47,7 @@ interface Clip {
   styleUrl: './video-details.css',
 })
 export class VideoDetails implements OnInit {
-  private apiUrl = 'http://localhost:3000/api';
+  private apiUrl = environment.apiUrl;
   private http = inject(HttpClient);
   private router = inject(Router);
   private route = inject(ActivatedRoute);

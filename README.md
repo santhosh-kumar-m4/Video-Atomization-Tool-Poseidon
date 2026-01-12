@@ -167,8 +167,9 @@ The application follows a client-server architecture with a clear separation bet
 4. **Error Handling**: Basic error handling with try-catch
    - Trade-off: Works for MVP, but could use centralized error middleware
 
-5. **Video Duration**: Not extracted on upload (TODO in code)
-   - Assumption: Not critical for MVP, can add later with ffprobe
+5. **Video Duration**: Extracted on upload using ffprobe
+   - Duration is automatically extracted when video is uploaded
+   - If extraction fails, duration is set to null (upload still succeeds)
 
 ## AI Usage
 

@@ -1,11 +1,10 @@
-// video routes
 const express = require('express');
 const router = express.Router();
 const upload = require('../middleware/upload');
 const pool = require('../config');
 const fs = require('fs');
+const { getVideoDuration } = require('../utils/videoMetadata');
 
-// upload endpoint
 router.post('/upload', upload.single('video'), async (req, res) => {
   try {
     if (!req.file) {
@@ -16,14 +15,17 @@ router.post('/upload', upload.single('video'), async (req, res) => {
     const stats = fs.statSync(file.path);
     const fileSize = stats.size;
 
-    // TODO: get duration with ffprobe later
-    const duration = null;
+    let duration = null;
+    try {
+      duration = await getVideoDuration(file.path);
+    } catch (durationError) {
+      console.error('Failed to extract duration:', durationError);
+    }
 
-    // insert into db
     const result = await pool.query(
       `INSERT INTO videos (filename, original_filename, file_path, file_size, duration, status)
        VALUES ($1, $2, $3, $4, $5, $6)
-       RETURNING id, filename, original_filename, file_size, status, created_at`,
+       RETURNING id, filename, original_filename, file_size, duration, status, created_at`,
       [file.filename, file.originalname, file.path, fileSize, duration, 'uploaded']
     );
 
@@ -52,7 +54,6 @@ router.post('/upload', upload.single('video'), async (req, res) => {
   }
 });
 
-// get all videos
 router.get('/', async (req, res) => {
   try {
     const result = await pool.query(
@@ -64,7 +65,6 @@ router.get('/', async (req, res) => {
   }
 });
 
-// get single video
 router.get('/:id', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM videos WHERE id = $1', [req.params.id]);
