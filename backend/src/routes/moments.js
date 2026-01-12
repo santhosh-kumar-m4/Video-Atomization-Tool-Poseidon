@@ -50,20 +50,10 @@ router.post('/:videoId/detect', async (req, res) => {
 router.get('/:videoId', async (req, res) => {
   try {
     const videoId = parseInt(req.params.videoId);
-
     const moments = await momentService.getMoments(videoId);
-
-    res.json({
-      success: true,
-      moments: moments
-    });
-
+    res.json({ success: true, moments: moments });
   } catch (error) {
-    console.error('Error fetching moments:', error);
-    res.status(500).json({
-      error: 'Failed to fetch moments',
-      message: error.message
-    });
+    res.status(500).json({ error: 'Failed to fetch moments' });
   }
 });
 

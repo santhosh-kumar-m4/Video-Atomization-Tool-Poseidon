@@ -93,7 +93,7 @@ router.get('/:videoId', async (req, res) => {
 router.get('/:clipId/download/:format', async (req, res) => {
   try {
     const clipId = parseInt(req.params.clipId);
-    const format = req.params.format; // 'horizontal' or 'vertical'
+    const format = req.params.format;
 
     if (format !== 'horizontal' && format !== 'vertical') {
       return res.status(400).json({ error: 'Invalid format. Use "horizontal" or "vertical"' });
