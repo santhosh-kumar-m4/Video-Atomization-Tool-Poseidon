@@ -1,4 +1,3 @@
-// db init script
 const pool = require('../config');
 const fs = require('fs');
 const path = require('path');
@@ -16,7 +15,6 @@ async function initDatabase() {
   }
 }
 
-// run directly
 if (require.main === module) {
   initDatabase()
     .then(() => {

@@ -1,4 +1,3 @@
-// transcript service using OpenAI Whisper
 const OpenAI = require('openai');
 const fs = require('fs');
 const pool = require('../config');

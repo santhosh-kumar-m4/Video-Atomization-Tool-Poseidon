@@ -24,7 +24,6 @@ For each moment give me:
 Transcript:
 ${transcriptText}
 
-Return a JSON array in this format:
 [
   {
     "title": "Moment title",
