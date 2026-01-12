@@ -63,6 +63,9 @@ export class VideoDetails implements OnInit {
   isGeneratingTranscript = signal(false);
   isDetectingMoments = signal(false);
   isGeneratingClips = signal(false);
+  
+  operationError = signal<string | null>(null);
+  operationSuccess = signal<string | null>(null);
 
   ngOnInit() {
     this.route.params.subscribe(params => {
@@ -149,7 +152,8 @@ export class VideoDetails implements OnInit {
       error: (err) => {
         this.isGeneratingTranscript.set(false);
         const errorMsg = err.error?.message || err.error?.error || 'Failed to generate transcript';
-        alert(errorMsg);
+        this.operationError.set(errorMsg);
+        setTimeout(() => this.operationError.set(null), 5000);
         console.error('Transcript error:', err);
       }
     });
@@ -186,7 +190,8 @@ export class VideoDetails implements OnInit {
       error: (err) => {
         this.isDetectingMoments.set(false);
         const errorMsg = err.error?.message || err.error?.error || 'Failed to detect moments';
-        alert(errorMsg);
+        this.operationError.set(errorMsg);
+        setTimeout(() => this.operationError.set(null), 5000);
         console.error('Moments error:', err);
       }
     });
@@ -202,12 +207,15 @@ export class VideoDetails implements OnInit {
       next: (response: any) => {
         this.isGeneratingClips.set(false);
         this.loadClips(video.id);
-        alert(`Generated ${response.results?.filter((r: any) => r.status === 'generated').length || 0} clips`);
+        const count = response.results?.filter((r: any) => r.status === 'generated').length || 0;
+        this.operationSuccess.set(`Generated ${count} clips successfully`);
+        setTimeout(() => this.operationSuccess.set(null), 5000);
       },
       error: (err) => {
         this.isGeneratingClips.set(false);
         const errorMsg = err.error?.message || err.error?.error || 'Failed to generate clips';
-        alert(errorMsg);
+        this.operationError.set(errorMsg);
+        setTimeout(() => this.operationError.set(null), 5000);
         console.error('Clips error:', err);
       }
     });

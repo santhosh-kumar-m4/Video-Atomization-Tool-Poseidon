@@ -9,6 +9,12 @@
   } @else if (error()) {
     <div class="error">{{ error() }}</div>
   } @else if (video()) {
+    @if (operationError()) {
+      <div class="operation-error">{{ operationError() }}</div>
+    }
+    @if (operationSuccess()) {
+      <div class="operation-success">{{ operationSuccess() }}</div>
+    }
     <div class="video-info-section">
       <h2>{{ video()!.original_filename }}</h2>
       <div class="info-grid">

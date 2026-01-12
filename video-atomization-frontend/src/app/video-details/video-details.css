@@ -38,6 +38,24 @@
   color: #dc3545;
 }
 
+.operation-error {
+  background: #f8d7da;
+  color: #721c24;
+  padding: 12px;
+  border-radius: 4px;
+  margin-bottom: 15px;
+  text-align: center;
+}
+
+.operation-success {
+  background: #d4edda;
+  color: #155724;
+  padding: 12px;
+  border-radius: 4px;
+  margin-bottom: 15px;
+  text-align: center;
+}
+
 .video-info-section {
   background: white;
   border: 1px solid #ddd;
