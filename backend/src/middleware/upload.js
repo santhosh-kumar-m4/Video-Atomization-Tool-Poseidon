@@ -1,4 +1,3 @@
-// multer setup for video uploads
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
@@ -13,19 +12,16 @@ const storage = multer.diskStorage({
     cb(null, uploadDir);
   },
   filename: (req, file, cb) => {
-    // unique filename
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
     const ext = path.extname(file.originalname);
     cb(null, `video-${uniqueSuffix}${ext}`);
   }
 });
 
-// filter video files only
 const fileFilter = (req, file, cb) => {
   const allowedTypes = ['video/mp4', 'video/mpeg', 'video/quicktime', 'video/x-msvideo', 'video/webm'];
   const ext = path.extname(file.originalname).toLowerCase();
   
-  // check both mimetype and extension
   if (allowedTypes.includes(file.mimetype) || ['.mp4', '.mov', '.avi', '.webm', '.mpeg'].includes(ext)) {
     cb(null, true);
   } else {
@@ -37,7 +33,7 @@ const upload = multer({
   storage: storage,
   fileFilter: fileFilter,
   limits: {
-    fileSize: 500 * 1024 * 1024 // 500MB
+    fileSize: 500 * 1024 * 1024
   }
 });
 

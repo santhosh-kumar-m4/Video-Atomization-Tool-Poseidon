@@ -1,57 +1,78 @@
 const express = require('express');
 const router = express.Router();
+const multer = require('multer');
 const upload = require('../middleware/upload');
 const pool = require('../config');
 const fs = require('fs');
 const { getVideoDuration } = require('../utils/videoMetadata');
 
-router.post('/upload', upload.single('video'), async (req, res) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({ error: 'No video file uploaded' });
-    }
-
-    const file = req.file;
-    const stats = fs.statSync(file.path);
-    const fileSize = stats.size;
-
-    let duration = null;
-    try {
-      duration = await getVideoDuration(file.path);
-    } catch (durationError) {
-      console.error('Failed to extract duration:', durationError);
-    }
-
-    const result = await pool.query(
-      `INSERT INTO videos (filename, original_filename, file_path, file_size, duration, status)
-       VALUES ($1, $2, $3, $4, $5, $6)
-       RETURNING id, filename, original_filename, file_size, duration, status, created_at`,
-      [file.filename, file.originalname, file.path, fileSize, duration, 'uploaded']
-    );
-
-    res.json({
-      success: true,
-      video: result.rows[0],
-      message: 'Video uploaded successfully'
-    });
-
-  } catch (error) {
-    console.error('Upload error:', error);
-    
-    // cleanup on error
-    if (req.file && fs.existsSync(req.file.path)) {
-      try {
-        fs.unlinkSync(req.file.path);
-      } catch (unlinkError) {
-        console.error('Error deleting file:', unlinkError);
+router.post('/upload', (req, res) => {
+  upload.single('video')(req, res, async (err) => {
+    if (err) {
+      if (err instanceof multer.MulterError) {
+        if (err.code === 'LIMIT_FILE_SIZE') {
+          return res.status(400).json({ 
+            error: 'File too large', 
+            message: 'Maximum file size is 500MB' 
+          });
+        }
+        return res.status(400).json({ 
+          error: 'Upload error', 
+          message: err.message 
+        });
       }
+      return res.status(400).json({ 
+        error: 'Upload failed', 
+        message: err.message 
+      });
     }
 
-    res.status(500).json({ 
-      error: 'Failed to upload video', 
-      message: error.message 
-    });
-  }
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: 'No video file uploaded' });
+      }
+
+      const file = req.file;
+      const stats = fs.statSync(file.path);
+      const fileSize = stats.size;
+
+      let duration = null;
+      try {
+        duration = await getVideoDuration(file.path);
+      } catch (durationError) {
+        console.error('Failed to extract duration:', durationError);
+      }
+
+      const result = await pool.query(
+        `INSERT INTO videos (filename, original_filename, file_path, file_size, duration, status)
+         VALUES ($1, $2, $3, $4, $5, $6)
+         RETURNING id, filename, original_filename, file_size, duration, status, created_at`,
+        [file.filename, file.originalname, file.path, fileSize, duration, 'uploaded']
+      );
+
+      res.json({
+        success: true,
+        video: result.rows[0],
+        message: 'Video uploaded successfully'
+      });
+
+    } catch (error) {
+      console.error('Upload error:', error);
+      
+      if (req.file && fs.existsSync(req.file.path)) {
+        try {
+          fs.unlinkSync(req.file.path);
+        } catch (unlinkError) {
+          console.error('Error deleting file:', unlinkError);
+        }
+      }
+
+      res.status(500).json({ 
+        error: 'Failed to upload video', 
+        message: error.message 
+      });
+    }
+  });
 });
 
 router.get('/', async (req, res) => {

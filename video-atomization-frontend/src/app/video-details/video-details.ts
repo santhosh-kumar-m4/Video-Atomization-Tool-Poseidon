@@ -148,7 +148,8 @@ export class VideoDetails implements OnInit {
       },
       error: (err) => {
         this.isGeneratingTranscript.set(false);
-        alert('Failed to generate transcript: ' + (err.error?.message || 'Unknown error'));
+        const errorMsg = err.error?.message || err.error?.error || 'Failed to generate transcript';
+        alert(errorMsg);
         console.error('Transcript error:', err);
       }
     });
@@ -184,7 +185,8 @@ export class VideoDetails implements OnInit {
       },
       error: (err) => {
         this.isDetectingMoments.set(false);
-        alert('Failed to detect moments: ' + (err.error?.message || 'Unknown error'));
+        const errorMsg = err.error?.message || err.error?.error || 'Failed to detect moments';
+        alert(errorMsg);
         console.error('Moments error:', err);
       }
     });
@@ -204,7 +206,8 @@ export class VideoDetails implements OnInit {
       },
       error: (err) => {
         this.isGeneratingClips.set(false);
-        alert('Failed to generate clips: ' + (err.error?.message || 'Unknown error'));
+        const errorMsg = err.error?.message || err.error?.error || 'Failed to generate clips';
+        alert(errorMsg);
         console.error('Clips error:', err);
       }
     });

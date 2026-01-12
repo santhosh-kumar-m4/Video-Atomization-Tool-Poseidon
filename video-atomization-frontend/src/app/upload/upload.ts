@@ -54,8 +54,15 @@ export class Upload {
   }
 
   handleFile(file: File) {
+    const maxSize = 500 * 1024 * 1024;
+    
     if (!file.type.startsWith('video/')) {
       this.uploadError.set('Please select a video file');
+      return;
+    }
+
+    if (file.size > maxSize) {
+      this.uploadError.set('File size exceeds 500MB limit');
       return;
     }
 
@@ -95,7 +102,8 @@ export class Upload {
       },
       error: (error) => {
         this.isUploading.set(false);
-        this.uploadError.set(error.error?.message || 'Upload failed');
+        const errorMsg = error.error?.message || error.error?.error || 'Upload failed';
+        this.uploadError.set(errorMsg);
         this.uploadProgress.set(0);
       }
     });
