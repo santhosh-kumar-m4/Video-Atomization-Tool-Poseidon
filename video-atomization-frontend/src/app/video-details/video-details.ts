@@ -1,0 +1,247 @@
+import { Component, signal, OnInit, inject } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { HttpClient } from '@angular/common/http';
+import { Router, ActivatedRoute, RouterModule } from '@angular/router';
+
+interface Video {
+  id: number;
+  filename: string;
+  original_filename: string;
+  file_path: string;
+  file_size: number;
+  duration: number | null;
+  status: string;
+  created_at: string;
+}
+
+interface Transcript {
+  id: number;
+  video_id: number;
+  transcript_text: string;
+  status: string;
+}
+
+interface Moment {
+  id: number;
+  video_id: number;
+  start_time: number;
+  end_time: number;
+  title: string;
+}
+
+interface Clip {
+  id: number;
+  video_id: number;
+  start_time: number;
+  end_time: number;
+  title: string;
+  horizontal_path: string | null;
+  vertical_path: string | null;
+}
+
+@Component({
+  selector: 'app-video-details',
+  imports: [CommonModule, RouterModule],
+  templateUrl: './video-details.html',
+  styleUrl: './video-details.css',
+})
+export class VideoDetails implements OnInit {
+  private apiUrl = 'http://localhost:3000/api';
+  private http = inject(HttpClient);
+  private router = inject(Router);
+  private route = inject(ActivatedRoute);
+
+  video = signal<Video | null>(null);
+  transcript = signal<Transcript | null>(null);
+  moments = signal<Moment[]>([]);
+  clips = signal<Clip[]>([]);
+  
+  isLoading = signal(false);
+  error = signal<string | null>(null);
+  
+  isGeneratingTranscript = signal(false);
+  isDetectingMoments = signal(false);
+  isGeneratingClips = signal(false);
+
+  ngOnInit() {
+    this.route.params.subscribe(params => {
+      const videoId = params['id'];
+      if (videoId) {
+        this.loadVideoDetails(parseInt(videoId));
+      }
+    });
+  }
+
+  loadVideoDetails(videoId: number) {
+    this.isLoading.set(true);
+    this.error.set(null);
+
+    this.http.get<{ video: Video }>(`${this.apiUrl}/videos/${videoId}`).subscribe({
+      next: (response) => {
+        this.video.set(response.video);
+        this.isLoading.set(false);
+        this.loadTranscript(videoId);
+        this.loadMoments(videoId);
+        this.loadClips(videoId);
+      },
+      error: (err) => {
+        this.error.set('Failed to load video');
+        this.isLoading.set(false);
+        console.error('Error loading video:', err);
+      }
+    });
+  }
+
+  loadTranscript(videoId: number) {
+    this.http.get<{ success: boolean; transcript: Transcript }>(`${this.apiUrl}/transcripts/${videoId}`).subscribe({
+      next: (response) => {
+        if (response.success && response.transcript) {
+          this.transcript.set(response.transcript);
+        }
+      },
+      error: () => {
+        this.transcript.set(null);
+      }
+    });
+  }
+
+  loadMoments(videoId: number) {
+    this.http.get<{ success: boolean; moments: Moment[] }>(`${this.apiUrl}/moments/${videoId}`).subscribe({
+      next: (response) => {
+        if (response.success) {
+          this.moments.set(response.moments || []);
+        }
+      },
+      error: () => {
+        this.moments.set([]);
+      }
+    });
+  }
+
+  loadClips(videoId: number) {
+    this.http.get<{ success: boolean; clips: Clip[] }>(`${this.apiUrl}/clips/${videoId}`).subscribe({
+      next: (response) => {
+        if (response.success) {
+          this.clips.set(response.clips || []);
+        }
+      },
+      error: () => {
+        this.clips.set([]);
+      }
+    });
+  }
+
+  generateTranscript() {
+    const video = this.video();
+    if (!video) return;
+
+    this.isGeneratingTranscript.set(true);
+    
+    this.http.post(`${this.apiUrl}/transcripts/${video.id}/generate`, {}).subscribe({
+      next: (response: any) => {
+        this.isGeneratingTranscript.set(false);
+        if (response.transcript) {
+          this.transcript.set(response.transcript);
+        }
+        this.pollTranscriptStatus(video.id);
+      },
+      error: (err) => {
+        this.isGeneratingTranscript.set(false);
+        alert('Failed to generate transcript: ' + (err.error?.message || 'Unknown error'));
+        console.error('Transcript error:', err);
+      }
+    });
+  }
+
+  pollTranscriptStatus(videoId: number) {
+    const interval = setInterval(() => {
+      this.loadTranscript(videoId);
+      const transcript = this.transcript();
+      if (transcript && transcript.status === 'completed') {
+        clearInterval(interval);
+      } else if (transcript && transcript.status === 'failed') {
+        clearInterval(interval);
+      }
+    }, 2000);
+
+    setTimeout(() => clearInterval(interval), 300000);
+  }
+
+  detectMoments() {
+    const video = this.video();
+    if (!video) return;
+
+    this.isDetectingMoments.set(true);
+    
+    this.http.post(`${this.apiUrl}/moments/${video.id}/detect`, {}).subscribe({
+      next: (response: any) => {
+        this.isDetectingMoments.set(false);
+        if (response.moments) {
+          this.moments.set(response.moments);
+          this.loadClips(video.id);
+        }
+      },
+      error: (err) => {
+        this.isDetectingMoments.set(false);
+        alert('Failed to detect moments: ' + (err.error?.message || 'Unknown error'));
+        console.error('Moments error:', err);
+      }
+    });
+  }
+
+  generateClips() {
+    const video = this.video();
+    if (!video) return;
+
+    this.isGeneratingClips.set(true);
+    
+    this.http.post(`${this.apiUrl}/clips/${video.id}/generate`, {}).subscribe({
+      next: (response: any) => {
+        this.isGeneratingClips.set(false);
+        this.loadClips(video.id);
+        alert(`Generated ${response.results?.filter((r: any) => r.status === 'generated').length || 0} clips`);
+      },
+      error: (err) => {
+        this.isGeneratingClips.set(false);
+        alert('Failed to generate clips: ' + (err.error?.message || 'Unknown error'));
+        console.error('Clips error:', err);
+      }
+    });
+  }
+
+  formatFileSize(bytes: number): string {
+    if (!bytes) return '0 B';
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+  }
+
+  formatDuration(seconds: number | null): string {
+    if (!seconds) return 'N/A';
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  }
+
+  formatTime(seconds: number): string {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  }
+
+  getGeneratedClipsCount(): number {
+    return this.clips().filter(c => c.horizontal_path && c.vertical_path).length;
+  }
+
+  allClipsGenerated(): boolean {
+    const clipsList = this.clips();
+    if (clipsList.length === 0) return false;
+    return clipsList.every(c => c.horizontal_path && c.vertical_path);
+  }
+
+  downloadClip(clipId: number, format: 'horizontal' | 'vertical', event: Event) {
+    event.stopPropagation();
+    const url = `${this.apiUrl}/clips/${clipId}/download/${format}`;
+    window.open(url, '_blank');
+  }
+}

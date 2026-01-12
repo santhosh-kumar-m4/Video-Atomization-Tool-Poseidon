@@ -4,8 +4,27 @@
   padding: 20px;
 }
 
-h2 {
+.header {
   margin-bottom: 20px;
+}
+
+.btn-back {
+  background: #6c757d;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+
+.btn-back:hover {
+  background: #5a6268;
+}
+
+h2 {
+  margin: 0;
   text-align: center;
 }
 

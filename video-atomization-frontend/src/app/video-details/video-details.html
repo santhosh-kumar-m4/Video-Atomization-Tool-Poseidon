@@ -1,0 +1,188 @@
+<div class="video-details-container">
+  <div class="header">
+    <button class="btn-back" routerLink="/videos">← Back to Videos</button>
+    <h1>Video Details</h1>
+  </div>
+
+  @if (isLoading()) {
+    <div class="loading">Loading video details...</div>
+  } @else if (error()) {
+    <div class="error">{{ error() }}</div>
+  } @else if (video()) {
+    <div class="video-info-section">
+      <h2>{{ video()!.original_filename }}</h2>
+      <div class="info-grid">
+        <div class="info-item">
+          <span class="label">File Size:</span>
+          <span>{{ formatFileSize(video()!.file_size) }}</span>
+        </div>
+        <div class="info-item">
+          <span class="label">Duration:</span>
+          <span>{{ formatDuration(video()!.duration) }}</span>
+        </div>
+        <div class="info-item">
+          <span class="label">Status:</span>
+          <span class="status-badge status-{{ video()!.status }}">{{ video()!.status }}</span>
+        </div>
+        <div class="info-item">
+          <span class="label">Uploaded:</span>
+          <span>{{ video()!.created_at | date:'short' }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="pipeline-section">
+      <h2>Processing Pipeline</h2>
+
+      <div class="pipeline-step">
+        <div class="step-header">
+          <h3>1. Transcript Generation</h3>
+          @if (transcript()) {
+            <span class="status-badge status-{{ transcript()!.status }}">
+              {{ transcript()!.status }}
+            </span>
+          } @else {
+            <span class="status-badge status-pending">Not Started</span>
+          }
+        </div>
+        
+        @if (transcript() && transcript()!.status === 'completed') {
+          <div class="step-content">
+            <p class="transcript-preview">{{ transcript()!.transcript_text.substring(0, 200) }}...</p>
+          </div>
+        }
+        
+        <button 
+          class="btn-action" 
+          [disabled]="isGeneratingTranscript() || (transcript() && transcript()!.status === 'processing')"
+          (click)="generateTranscript()">
+          @if (isGeneratingTranscript() || (transcript() && transcript()!.status === 'processing')) {
+            Generating...
+          } @else if (transcript() && transcript()!.status === 'completed') {
+            Regenerate Transcript
+          } @else {
+            Generate Transcript
+          }
+        </button>
+      </div>
+
+      <div class="pipeline-step">
+        <div class="step-header">
+          <h3>2. Detect Key Moments</h3>
+          @if (moments().length > 0) {
+            <span class="status-badge status-completed">{{ moments().length }} moments</span>
+          } @else {
+            <span class="status-badge status-pending">Not Started</span>
+          }
+        </div>
+        
+        @if (moments().length > 0) {
+          <div class="moments-list">
+            @for (moment of moments(); track moment.id) {
+              <div class="moment-item">
+                <strong>{{ moment.title }}</strong>
+                <span>{{ formatTime(moment.start_time) }} - {{ formatTime(moment.end_time) }}</span>
+              </div>
+            }
+          </div>
+        }
+        
+        <button 
+          class="btn-action" 
+          [disabled]="isDetectingMoments() || !transcript() || transcript()!.status !== 'completed'"
+          (click)="detectMoments()">
+          @if (isDetectingMoments()) {
+            Detecting...
+          } @else if (moments().length > 0) {
+            Re-detect Moments
+          } @else {
+            Detect Moments
+          }
+        </button>
+        @if (!transcript() || transcript()!.status !== 'completed') {
+          <p class="step-hint">Generate transcript first</p>
+        }
+      </div>
+
+      <div class="pipeline-step">
+        <div class="step-header">
+          <h3>3. Generate Clips</h3>
+          @if (clips().length > 0) {
+            <span class="status-badge" [ngClass]="allClipsGenerated() ? 'status-completed' : 'status-processing'">
+              {{ getGeneratedClipsCount() }}/{{ clips().length }} generated
+            </span>
+          } @else {
+            <span class="status-badge status-pending">Not Started</span>
+          }
+        </div>
+        
+        @if (clips().length > 0) {
+          <div class="clips-gallery">
+            @for (clip of clips(); track clip.id) {
+              <div class="clip-card">
+                <div class="clip-card-header">
+                  <h4>{{ clip.title }}</h4>
+                  <span class="clip-duration">{{ formatTime(clip.start_time) }} - {{ formatTime(clip.end_time) }}</span>
+                </div>
+                
+                <div class="clip-formats-section">
+                  <div class="format-item">
+                    <div class="format-label">
+                      <span class="format-name">16:9 (Horizontal)</span>
+                      @if (clip.horizontal_path) {
+                        <span class="format-badge ready">Ready</span>
+                      } @else {
+                        <span class="format-badge pending">Not Generated</span>
+                      }
+                    </div>
+                    @if (clip.horizontal_path) {
+                      <button 
+                        class="btn-download" 
+                        (click)="downloadClip(clip.id, 'horizontal', $event)">
+                        Download
+                      </button>
+                    }
+                  </div>
+                  
+                  <div class="format-item">
+                    <div class="format-label">
+                      <span class="format-name">9:16 (Vertical)</span>
+                      @if (clip.vertical_path) {
+                        <span class="format-badge ready">Ready</span>
+                      } @else {
+                        <span class="format-badge pending">Not Generated</span>
+                      }
+                    </div>
+                    @if (clip.vertical_path) {
+                      <button 
+                        class="btn-download" 
+                        (click)="downloadClip(clip.id, 'vertical', $event)">
+                        Download
+                      </button>
+                    }
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        }
+        
+        <button 
+          class="btn-action" 
+          [disabled]="isGeneratingClips() || moments().length === 0"
+          (click)="generateClips()">
+          @if (isGeneratingClips()) {
+            Generating...
+          } @else if (clips().length > 0) {
+            Regenerate All Clips
+          } @else {
+            Generate Clips
+          }
+        </button>
+        @if (moments().length === 0) {
+          <p class="step-hint">Detect moments first</p>
+        }
+      </div>
+    </div>
+  }
+</div>

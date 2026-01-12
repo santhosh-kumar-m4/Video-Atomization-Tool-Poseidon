@@ -12,32 +12,22 @@ router.post('/:videoId/generate', async (req, res) => {
       return res.status(404).json({ error: 'Video not found' });
     }
 
-    const clipsResult = await pool.query(
-      'SELECT * FROM clips WHERE video_id = $1',
-      [videoId]
-    );
-
+    const clipsResult = await pool.query('SELECT * FROM clips WHERE video_id = $1', [videoId]);
     if (clipsResult.rows.length === 0) {
-      return res.status(400).json({ 
-        error: 'No clips found',
-        message: 'Please detect moments first'
-      });
+      return res.status(400).json({ error: 'No clips found' });
     }
 
     const results = await clipService.generateAllClips(videoId);
+    const generatedCount = results.filter(r => r.status === 'generated').length;
 
     res.json({
       success: true,
       results: results,
-      message: `Generated ${results.filter(r => r.status === 'generated').length} clips`
+      message: `Generated ${generatedCount} clips`
     });
-
   } catch (error) {
     console.error('Error generating clips:', error);
-    res.status(500).json({
-      error: 'Failed to generate clips',
-      message: error.message
-    });
+    res.status(500).json({ error: 'Failed to generate clips', message: error.message });
   }
 });
 
@@ -51,7 +41,6 @@ router.post('/:clipId/generate-one', async (req, res) => {
     }
 
     const clip = clipResult.rows[0];
-
     if (clip.horizontal_path && clip.vertical_path) {
       return res.json({
         success: true,
@@ -82,36 +71,66 @@ router.post('/:clipId/generate-one', async (req, res) => {
       paths: paths,
       message: 'Clip generated successfully'
     });
-
   } catch (error) {
     console.error('Error generating clip:', error);
-    res.status(500).json({
-      error: 'Failed to generate clip',
-      message: error.message
-    });
+    res.status(500).json({ error: 'Failed to generate clip', message: error.message });
   }
 });
 
 router.get('/:videoId', async (req, res) => {
   try {
     const videoId = parseInt(req.params.videoId);
-
     const result = await pool.query(
       'SELECT * FROM clips WHERE video_id = $1 ORDER BY start_time ASC',
       [videoId]
     );
+    res.json({ success: true, clips: result.rows });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch clips' });
+  }
+});
 
-    res.json({
-      success: true,
-      clips: result.rows
+router.get('/:clipId/download/:format', async (req, res) => {
+  try {
+    const clipId = parseInt(req.params.clipId);
+    const format = req.params.format; // 'horizontal' or 'vertical'
+
+    if (format !== 'horizontal' && format !== 'vertical') {
+      return res.status(400).json({ error: 'Invalid format. Use "horizontal" or "vertical"' });
+    }
+
+    const clipResult = await pool.query('SELECT * FROM clips WHERE id = $1', [clipId]);
+    if (clipResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Clip not found' });
+    }
+
+    const clip = clipResult.rows[0];
+    const filePath = format === 'horizontal' ? clip.horizontal_path : clip.vertical_path;
+
+    if (!filePath) {
+      return res.status(404).json({ error: 'Clip file not generated yet' });
+    }
+
+    const fs = require('fs');
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ error: 'Clip file not found' });
+    }
+
+    const path = require('path');
+    const fileName = path.basename(filePath);
+    
+    res.download(filePath, fileName, (err) => {
+      if (err) {
+        console.error('Error downloading clip:', err);
+        if (!res.headersSent) {
+          res.status(500).json({ error: 'Failed to download clip' });
+        }
+      }
     });
 
   } catch (error) {
-    console.error('Error fetching clips:', error);
-    res.status(500).json({
-      error: 'Failed to fetch clips',
-      message: error.message
-    });
+    console.error('Error downloading clip:', error);
+    res.status(500).json({ error: 'Failed to download clip', message: error.message });
   }
 });
 

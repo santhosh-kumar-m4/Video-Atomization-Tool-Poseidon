@@ -1,15 +1,17 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpEventType } from '@angular/common/http';
+import { Router, RouterModule } from '@angular/router';
 
 @Component({
   selector: 'app-upload',
-  imports: [CommonModule],
+  imports: [CommonModule, RouterModule],
   templateUrl: './upload.html',
   styleUrl: './upload.css',
 })
 export class Upload {
   private apiUrl = 'http://localhost:3000/api'; // TODO: move to env config
+  private router = inject(Router);
   
   isDragging = signal(false);
   uploadProgress = signal(0);
@@ -86,11 +88,9 @@ export class Upload {
           this.isUploading.set(false);
           this.uploadSuccess.set(true);
           this.selectedFile = null;
-          // hide success after 3s
           setTimeout(() => {
-            this.uploadSuccess.set(false);
-            this.uploadProgress.set(0);
-          }, 3000);
+            this.router.navigate(['/videos']);
+          }, 2000);
         }
       },
       error: (error) => {

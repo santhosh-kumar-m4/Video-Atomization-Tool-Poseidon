@@ -1,0 +1,55 @@
+<div class="video-list-container">
+  <div class="header">
+    <h1>Video Dashboard</h1>
+    <button class="btn-primary" routerLink="/upload">Upload Video</button>
+  </div>
+
+  @if (isLoading()) {
+    <div class="loading">Loading videos...</div>
+  } @else if (error()) {
+    <div class="error">{{ error() }}</div>
+    <button class="btn-retry" (click)="loadVideos()">Retry</button>
+  } @else if (videos().length === 0) {
+    <div class="empty-state">
+      <p>No videos uploaded yet.</p>
+      <button class="btn-primary" routerLink="/upload">Upload Your First Video</button>
+    </div>
+  } @else {
+    <div class="video-grid">
+      @for (video of videos(); track video.id) {
+        <div class="video-card" (click)="viewVideo(video.id)">
+          <div class="video-card-header">
+            <h3>{{ video.original_filename }}</h3>
+            <span class="status-badge" [ngClass]="getStatusClass(video.status)">
+              {{ video.status }}
+            </span>
+          </div>
+          
+          <div class="video-card-body">
+            <div class="video-info">
+              <span class="info-label">Size:</span>
+              <span>{{ formatFileSize(video.file_size) }}</span>
+            </div>
+            <div class="video-info">
+              <span class="info-label">Duration:</span>
+              <span>{{ formatDuration(video.duration) }}</span>
+            </div>
+            <div class="video-info">
+              <span class="info-label">Uploaded:</span>
+              <span>{{ video.created_at | date:'short' }}</span>
+            </div>
+          </div>
+
+          <div class="video-card-actions">
+            <button class="btn-view" (click)="viewVideo(video.id); $event.stopPropagation()">
+              View Details
+            </button>
+            <button class="btn-delete" (click)="deleteVideo(video.id, $event)">
+              Delete
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>
