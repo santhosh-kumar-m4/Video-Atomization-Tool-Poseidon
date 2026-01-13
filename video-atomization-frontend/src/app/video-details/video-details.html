@@ -32,7 +32,7 @@
         </div>
         <div class="info-item">
           <span class="label">Uploaded:</span>
-          <span>{{ video()!.created_at | date:'short' }}</span>
+          <span>{{ formatDate(video()!.created_at) }}</span>
         </div>
       </div>
     </div>

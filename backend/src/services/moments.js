@@ -1,9 +1,25 @@
+const { OpenRouter } = require('@openrouter/sdk');
 const OpenAI = require('openai');
 const pool = require('../config');
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
-});
+const useOpenRouter = process.env.USE_OPENROUTER === 'true';
+
+let openRouterClient = null;
+let openaiClient = null;
+
+if (useOpenRouter) {
+  openRouterClient = new OpenRouter({
+    apiKey: process.env.OPENROUTER_API_KEY,
+    defaultHeaders: {
+      'HTTP-Referer': process.env.APP_URL || 'http://localhost:3000',
+      'X-Title': 'Video Atomization Tool'
+    }
+  });
+} else {
+  openaiClient = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY
+  });
+}
 
 async function detectMoments(videoId, transcriptText) {
   const videoResult = await pool.query('SELECT * FROM videos WHERE id = $1', [videoId]);
@@ -34,23 +50,47 @@ ${transcriptText}
 
 Just return the JSON array, nothing else.`;
 
-  const response = await openai.chat.completions.create({
-    model: 'gpt-4',
-    messages: [
-      {
-        role: 'system',
-        content: 'You are a video editor. Find the most interesting moments in transcripts that would work as short clips.'
-      },
-      {
-        role: 'user',
-        content: prompt
-      }
-    ],
-    temperature: 0.7,
-    max_tokens: 1000
-  });
-
-  const content = response.choices[0].message.content.trim();
+  let content;
+  
+  if (useOpenRouter) {
+    const model = process.env.OPENROUTER_MODEL || 'openai/gpt-oss-20b:free';
+    
+    const completion = await openRouterClient.chat.send({
+      model: model,
+      messages: [
+        {
+          role: 'system',
+          content: 'You are a video editor. Find the most interesting moments in transcripts that would work as short clips.'
+        },
+        {
+          role: 'user',
+          content: prompt
+        }
+      ],
+      temperature: 0.7,
+      max_tokens: 1000
+    });
+    
+    content = completion.choices[0].message.content.trim();
+  } else {
+    const response = await openaiClient.chat.completions.create({
+      model: 'gpt-4',
+      messages: [
+        {
+          role: 'system',
+          content: 'You are a video editor. Find the most interesting moments in transcripts that would work as short clips.'
+        },
+        {
+          role: 'user',
+          content: prompt
+        }
+      ],
+      temperature: 0.7,
+      max_tokens: 1000
+    });
+    
+    content = response.choices[0].message.content.trim();
+  }
   
   let moments;
   try {

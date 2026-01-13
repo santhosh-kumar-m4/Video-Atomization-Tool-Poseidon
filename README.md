@@ -16,7 +16,7 @@ This tool processes long-form videos (10-30 minutes) and automatically:
 - **Backend:** Node.js + Express
 - **Database:** PostgreSQL (using Neon for easy setup)
 - **Video Processing:** ffmpeg
-- **AI:** OpenAI API (Whisper for transcription, GPT-4 for moment detection)
+- **AI:** Groq (Whisper for transcription), OpenRouter (GPT-OSS-20B for moment detection)
 
 ## Project Structure
 
@@ -36,7 +36,9 @@ Video-Atomization-Tool-Poseidon/
 - Node.js (v18+)
 - PostgreSQL database (or use Neon for cloud setup)
 - ffmpeg installed on your system
-- OpenAI API key
+- Groq API key (free) - for transcription
+- OpenRouter API key (free) - for moment detection
+- Optional: OpenAI API key (if you prefer paid models)
 
 ### Backend Setup
 
@@ -54,9 +56,19 @@ npm install
 ```bash
 PORT=3000
 DATABASE_URL=postgresql://user:password@localhost:5432/video_atomization
-OPENAI_API_KEY=your_openai_api_key_here
 UPLOAD_DIR=./uploads
 CLIPS_DIR=./clips
+
+# AI Services (Free options)
+USE_GROQ=true
+GROQ_API_KEY=your_groq_api_key_here
+USE_OPENROUTER=true
+OPENROUTER_API_KEY=your_openrouter_api_key_here
+OPENROUTER_MODEL=openai/gpt-oss-20b:free
+APP_URL=http://localhost:3000
+
+# Optional: OpenAI (if you prefer paid models)
+OPENAI_API_KEY=your_openai_api_key_here
 ```
 
 4. Initialize database:
@@ -98,7 +110,8 @@ The application follows a client-server architecture with a clear separation bet
 │  Frontend   │  HTTP   │    Backend    │  SQL    │  (Neon DB)  │
 └─────────────┘         └──────────────┘         └─────────────┘
                               │
-                              ├──> OpenAI API (Whisper + GPT-4)
+                              ├──> Groq API (Whisper transcription)
+                              ├──> OpenRouter API (Moment detection)
                               └──> FFmpeg (Video Processing)
 ```
 
@@ -126,8 +139,8 @@ The application follows a client-server architecture with a clear separation bet
 ### Data Flow
 
 1. **Upload**: User uploads video → Stored in `uploads/` → Metadata saved to DB
-2. **Transcription**: Video sent to OpenAI Whisper → Transcript stored in DB
-3. **Moment Detection**: Transcript analyzed by GPT-4 → Key moments identified → Clips created in DB
+2. **Transcription**: Video sent to Groq Whisper → Transcript stored in DB
+3. **Moment Detection**: Transcript analyzed by OpenRouter (GPT-OSS-20B) → Key moments identified → Clips created in DB
 4. **Clip Generation**: FFmpeg processes video → Generates 16:9 and 9:16 formats → Files saved to `clips/`
 5. **Download**: User requests clip → Backend serves file from `clips/` directory
 
@@ -173,24 +186,37 @@ The application follows a client-server architecture with a clear separation bet
 
 ## AI Usage
 
-### OpenAI API Integration
+### AI Service Integration
 
-**Whisper API** (for transcription):
-- Model: `whisper-1`
+The application uses **free AI services** to keep costs at zero:
+
+**Groq API** (for transcription):
+- Service: Groq (free tier)
+- Model: `whisper-large-v3-turbo`
 - Input: Video file stream
 - Output: Plain text transcript
 - Usage: Called when user clicks "Generate Transcript"
+- Why Groq: Free, fast, and uses the latest Whisper model
 
-**GPT-4** (for moment detection):
-- Model: `gpt-4`
+**OpenRouter API** (for moment detection):
+- Service: OpenRouter (free tier)
+- Model: `openai/gpt-oss-20b:free` (21B parameter model)
 - Input: Transcript text with prompt
 - Output: JSON array of moments with titles and timestamps
 - Temperature: 0.7 (balanced creativity/consistency)
 - Usage: Called when user clicks "Detect Moments"
+- Why OpenRouter: Free access to powerful open-source models, OpenAI-compatible API
+
+### Alternative: OpenAI (Paid)
+
+The code supports OpenAI as a fallback:
+- Set `USE_GROQ=false` to use OpenAI Whisper
+- Set `USE_OPENROUTER=false` to use OpenAI GPT-4
+- Requires valid `OPENAI_API_KEY` with credits
 
 ### Prompt Engineering
 
-The moment detection prompt asks GPT-4 to:
+The moment detection prompt asks the LLM to:
 - Identify 3-5 key moments
 - Generate short titles (< 50 chars)
 - Estimate timestamps based on transcript position
@@ -203,7 +229,8 @@ The system prompt sets context: "You are a video editor. Find the most interesti
 - API calls are made synchronously (user waits)
 - Transcripts are cached in database (no re-generation)
 - Moments are cached (can re-detect if needed)
-- Error handling includes retry logic for API failures
+- Error handling includes proper error messages for API failures
+- Free tier limits: Groq has generous limits, OpenRouter has 50 free requests/day (1000/day with $10+ credits)
 
 ## Testing
 
@@ -245,13 +272,13 @@ The system prompt sets context: "You are a video editor. Find the most interesti
 ✅ **Completed Features:**
 - Video upload with validation (500MB limit)
 - Video duration extraction using ffprobe
-- Transcript generation with OpenAI Whisper
-- AI-powered moment detection with GPT-4
+- Transcript generation with Groq Whisper (free)
+- AI-powered moment detection with OpenRouter GPT-OSS-20B (free)
 - Clip generation in 16:9 and 9:16 formats
 - Download functionality for generated clips
 - Dashboard UI with video listing
 - Video details page with processing pipeline
-- Environment configuration
+- Environment configuration with free AI services
 - Error handling and user feedback
 - File size and type validation
 

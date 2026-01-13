@@ -1,10 +1,22 @@
+const Groq = require('groq-sdk');
 const OpenAI = require('openai');
 const fs = require('fs');
 const pool = require('../config');
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
-});
+const useGroq = process.env.USE_GROQ !== 'false';
+
+let groqClient = null;
+let openaiClient = null;
+
+if (useGroq) {
+  groqClient = new Groq({
+    apiKey: process.env.GROQ_API_KEY
+  });
+} else {
+  openaiClient = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY
+  });
+}
 
 async function generateTranscript(videoId, videoPath) {
   try {
@@ -32,11 +44,23 @@ async function generateTranscript(videoId, videoPath) {
 
     const videoFile = fs.createReadStream(videoPath);
 
-    const transcription = await openai.audio.transcriptions.create({
-      file: videoFile,
-      model: 'whisper-1',
-      response_format: 'text'
-    });
+    let transcription;
+    if (useGroq) {
+      const result = await groqClient.audio.transcriptions.create({
+        file: videoFile,
+        model: 'whisper-large-v3-turbo',
+        temperature: 0,
+        response_format: 'text'
+      });
+      transcription = result.text || result;
+    } else {
+      const result = await openaiClient.audio.transcriptions.create({
+        file: videoFile,
+        model: 'whisper-1',
+        response_format: 'text'
+      });
+      transcription = result;
+    }
 
     await pool.query(
       `UPDATE transcripts 
