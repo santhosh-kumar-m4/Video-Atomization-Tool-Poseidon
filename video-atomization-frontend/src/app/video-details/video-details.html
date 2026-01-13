@@ -55,6 +55,12 @@
         @if (transcript() && transcript()!.status === 'completed') {
           <div class="step-content">
             <p class="transcript-preview">{{ transcript()!.transcript_text.substring(0, 200) }}...</p>
+            <button 
+              class="btn-copy" 
+              (click)="copyTranscriptToClipboard()"
+              title="Copy full transcript to clipboard">
+              📋 Copy Full Transcript
+            </button>
           </div>
         }
         

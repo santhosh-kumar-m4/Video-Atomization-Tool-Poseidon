@@ -243,14 +243,38 @@ export class VideoDetails implements OnInit {
 
   formatDate(dateString: string): string {
     if (!dateString) return 'N/A';
-    const date = new Date(dateString);
-    return date.toLocaleString('en-US', {
+    let date: Date;
+    
+    if (dateString.includes('Z') || dateString.includes('+') || dateString.includes('-', 10)) {
+      date = new Date(dateString);
+    } else {
+      date = new Date(dateString + 'Z');
+    }
+    
+    return date.toLocaleString('en-IN', {
       month: 'short',
       day: 'numeric',
       year: 'numeric',
       hour: 'numeric',
       minute: '2-digit',
-      hour12: true
+      hour12: true,
+      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+    });
+  }
+
+  copyTranscriptToClipboard() {
+    const transcript = this.transcript();
+    if (!transcript || !transcript.transcript_text) {
+      return;
+    }
+
+    navigator.clipboard.writeText(transcript.transcript_text).then(() => {
+      this.operationSuccess.set('Transcript copied to clipboard!');
+      setTimeout(() => this.operationSuccess.set(null), 3000);
+    }).catch((err) => {
+      this.operationError.set('Failed to copy transcript');
+      setTimeout(() => this.operationError.set(null), 3000);
+      console.error('Copy error:', err);
     });
   }
 

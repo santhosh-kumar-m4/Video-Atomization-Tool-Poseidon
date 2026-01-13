@@ -28,6 +28,7 @@ export class VideoList implements OnInit {
   videos = signal<Video[]>([]);
   isLoading = signal(false);
   error = signal<string | null>(null);
+  deleteError = signal<string | null>(null);
 
   ngOnInit() {
     this.loadVideos();
@@ -66,7 +67,14 @@ export class VideoList implements OnInit {
 
   formatDate(dateString: string): string {
     if (!dateString) return 'N/A';
-    const date = new Date(dateString);
+    let date: Date;
+    
+    if (dateString.includes('Z') || dateString.includes('+') || dateString.includes('-', 10)) {
+      date = new Date(dateString);
+    } else {
+      date = new Date(dateString + 'Z');
+    }
+    
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
     const diffMins = Math.floor(diffMs / 60000);
@@ -80,12 +88,14 @@ export class VideoList implements OnInit {
     const diffDays = Math.floor(diffHours / 24);
     if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
     
-    return date.toLocaleDateString('en-US', { 
+    return date.toLocaleString('en-IN', { 
       month: 'short', 
       day: 'numeric', 
       year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined,
       hour: 'numeric',
-      minute: '2-digit'
+      minute: '2-digit',
+      hour12: true,
+      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
     });
   }
 
@@ -110,12 +120,16 @@ export class VideoList implements OnInit {
       return;
     }
 
+    this.deleteError.set(null);
+
     this.http.delete(`${this.apiUrl}/videos/${id}`).subscribe({
       next: () => {
         this.loadVideos();
       },
       error: (err) => {
-        alert('Failed to delete video');
+        const errorMsg = err.error?.message || err.error?.error || 'Failed to delete video';
+        this.deleteError.set(errorMsg);
+        setTimeout(() => this.deleteError.set(null), 5000);
         console.error('Delete error:', err);
       }
     });

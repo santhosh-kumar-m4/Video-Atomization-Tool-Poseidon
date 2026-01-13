@@ -46,7 +46,7 @@ async function generateClip(clipId, videoPath, startTime, endTime, title) {
       .setDuration(duration)
       .videoCodec('libx264')
       .audioCodec('aac')
-      .outputOptions(['-preset fast', '-crf 23', '-vf scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2'])
+      .outputOptions(['-preset fast', '-crf 23', '-vf scale=-1:1920,crop=1080:1920:(iw-1080)/2:0'])
       .output(vPath)
       .on('end', () => {
         console.log(`Vertical clip done: ${vPath}`);

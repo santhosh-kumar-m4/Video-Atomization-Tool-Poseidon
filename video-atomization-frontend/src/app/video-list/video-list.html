@@ -9,13 +9,17 @@
   } @else if (error()) {
     <div class="error">{{ error() }}</div>
     <button class="btn-retry" (click)="loadVideos()">Retry</button>
-  } @else if (videos().length === 0) {
-    <div class="empty-state">
-      <p>No videos uploaded yet.</p>
-      <button class="btn-primary" routerLink="/upload">Upload Your First Video</button>
-    </div>
   } @else {
-    <div class="video-grid">
+    @if (deleteError()) {
+      <div class="delete-error">{{ deleteError() }}</div>
+    }
+    @if (videos().length === 0) {
+      <div class="empty-state">
+        <p>No videos uploaded yet.</p>
+        <button class="btn-primary" routerLink="/upload">Upload Your First Video</button>
+      </div>
+    } @else {
+      <div class="video-grid">
       @for (video of videos(); track video.id) {
         <div class="video-card" (click)="viewVideo(video.id)">
           <div class="video-card-header">
@@ -50,6 +54,7 @@
           </div>
         </div>
       }
-    </div>
+      </div>
+    }
   }
 </div>

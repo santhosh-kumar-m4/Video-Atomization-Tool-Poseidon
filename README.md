@@ -5,8 +5,8 @@ A web application that automatically transforms long-form videos into short, sha
 ## Overview
 
 This tool processes long-form videos (10-30 minutes) and automatically:
-1. Generates timestamped transcripts
-2. Identifies key moments using AI
+1. Generates transcripts using AI (Whisper)
+2. Identifies key moments using AI (with estimated timestamps)
 3. Creates short clips from detected moments
 4. Exports clips in both horizontal (16:9) and vertical (9:16) formats
 

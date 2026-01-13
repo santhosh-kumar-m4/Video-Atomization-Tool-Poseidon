@@ -41,6 +41,15 @@
   color: #dc3545;
 }
 
+.delete-error {
+  background: #ffebee;
+  color: #d32f2f;
+  padding: 1rem;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
 .btn-retry {
   display: block;
   margin: 1rem auto;

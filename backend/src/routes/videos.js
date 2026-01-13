@@ -43,16 +43,20 @@ router.post('/upload', (req, res) => {
         console.error('Failed to extract duration:', durationError);
       }
 
+      const now = new Date();
       const result = await pool.query(
-        `INSERT INTO videos (filename, original_filename, file_path, file_size, duration, status)
-         VALUES ($1, $2, $3, $4, $5, $6)
+        `INSERT INTO videos (filename, original_filename, file_path, file_size, duration, status, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)
          RETURNING id, filename, original_filename, file_size, duration, status, created_at`,
-        [file.filename, file.originalname, file.path, fileSize, duration, 'uploaded']
+        [file.filename, file.originalname, file.path, fileSize, duration, 'uploaded', now]
       );
+
+      const video = result.rows[0];
+      video.created_at = video.created_at ? new Date(video.created_at).toISOString() : video.created_at;
 
       res.json({
         success: true,
-        video: result.rows[0],
+        video: video,
         message: 'Video uploaded successfully'
       });
 
@@ -80,7 +84,13 @@ router.get('/', async (req, res) => {
     const result = await pool.query(
       'SELECT id, filename, original_filename, file_size, duration, status, created_at FROM videos ORDER BY created_at DESC'
     );
-    res.json({ videos: result.rows });
+    
+    const videos = result.rows.map(video => ({
+      ...video,
+      created_at: video.created_at ? new Date(video.created_at).toISOString() : video.created_at
+    }));
+    
+    res.json({ videos });
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch videos' });
   }
@@ -92,7 +102,12 @@ router.get('/:id', async (req, res) => {
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Video not found' });
     }
-    res.json({ video: result.rows[0] });
+    
+    const video = result.rows[0];
+    video.created_at = video.created_at ? new Date(video.created_at).toISOString() : video.created_at;
+    video.updated_at = video.updated_at ? new Date(video.updated_at).toISOString() : video.updated_at;
+    
+    res.json({ video });
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch video' });
   }

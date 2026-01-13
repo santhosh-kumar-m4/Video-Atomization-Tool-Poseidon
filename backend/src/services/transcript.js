@@ -52,7 +52,7 @@ async function generateTranscript(videoId, videoPath) {
         temperature: 0,
         response_format: 'text'
       });
-      transcription = result.text || result;
+      transcription = typeof result === 'string' ? result : (result.text || '');
     } else {
       const result = await openaiClient.audio.transcriptions.create({
         file: videoFile,
