@@ -7,7 +7,7 @@ export function getVideoDuration(videoPath: string): Promise<number> {
     const normalizedPath = path.resolve(videoPath);
     
     if (!fs.existsSync(normalizedPath)) {
-      reject(new Error('Video file not found: ' + normalizedPath));
+      reject(new Error(`Video file not found: ${normalizedPath}`));
       return;
     }
 

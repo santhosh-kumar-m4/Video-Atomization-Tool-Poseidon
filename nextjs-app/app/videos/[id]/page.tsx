@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 
@@ -59,10 +59,18 @@ export default function VideoDetailsPage() {
   const [operationError, setOperationError] = useState<string | null>(null);
   const [operationSuccess, setOperationSuccess] = useState<string | null>(null);
 
+  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
   useEffect(() => {
     if (videoId && !isNaN(videoId)) {
       loadVideoDetails(videoId);
     }
+    
+    return () => {
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+      }
+    };
   }, [videoId]);
 
   const loadVideoDetails = async (id: number) => {
@@ -97,6 +105,7 @@ export default function VideoDetailsPage() {
         }
       }
     } catch (err) {
+      // silently fail, transcript might not exist yet
     }
   };
 
@@ -134,7 +143,7 @@ export default function VideoDetailsPage() {
     setIsGeneratingTranscript(true);
     
     try {
-      const response = await fetch(`/api/transcripts/${video.id}/generate`, {
+      const response = await fetch(`/api/transcripts/${video.id}`, {
         method: 'POST'
       });
       
@@ -162,20 +171,36 @@ export default function VideoDetailsPage() {
   };
 
   const pollTranscriptStatus = (id: number) => {
-    const interval = setInterval(async () => {
-      const response = await fetch(`/api/transcripts/${id}`);
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success && data.transcript) {
-          setTranscript(data.transcript);
-          if (data.transcript.status === 'completed' || data.transcript.status === 'failed') {
-            clearInterval(interval);
+    if (pollingIntervalRef.current) {
+      clearInterval(pollingIntervalRef.current);
+    }
+
+    pollingIntervalRef.current = setInterval(async () => {
+      try {
+        const response = await fetch(`/api/transcripts/${id}`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success && data.transcript) {
+            setTranscript(data.transcript);
+            if (data.transcript.status === 'completed' || data.transcript.status === 'failed') {
+              if (pollingIntervalRef.current) {
+                clearInterval(pollingIntervalRef.current);
+                pollingIntervalRef.current = null;
+              }
+            }
           }
         }
+      } catch (err) {
+        // ignore polling errors
       }
     }, 2000);
 
-    setTimeout(() => clearInterval(interval), 300000);
+    setTimeout(() => {
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+        pollingIntervalRef.current = null;
+      }
+    }, 300000);
   };
 
   const detectMoments = async () => {
@@ -184,7 +209,7 @@ export default function VideoDetailsPage() {
     setIsDetectingMoments(true);
     
     try {
-      const response = await fetch(`/api/moments/${video.id}/detect`, {
+      const response = await fetch(`/api/moments/${video.id}`, {
         method: 'POST'
       });
       
@@ -214,7 +239,7 @@ export default function VideoDetailsPage() {
     setIsGeneratingClips(true);
     
     try {
-      const response = await fetch(`/api/clips/${video.id}/generate`, {
+      const response = await fetch(`/api/clips/${video.id}`, {
         method: 'POST'
       });
       
