@@ -105,7 +105,6 @@ export default function VideoDetailsPage() {
         }
       }
     } catch (err) {
-      // silently fail, transcript might not exist yet
     }
   };
 
@@ -191,7 +190,6 @@ export default function VideoDetailsPage() {
           }
         }
       } catch (err) {
-        // ignore polling errors
       }
     }, 2000);
 

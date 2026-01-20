@@ -39,6 +39,10 @@ backend/uploads/*
 backend/clips/*
 !backend/uploads/.gitkeep
 !backend/clips/.gitkeep
+nextjs-app/uploads/*
+nextjs-app/clips/*
+!nextjs-app/uploads/.gitkeep
+!nextjs-app/clips/.gitkeep
 
 # Temporary files
 *.tmp

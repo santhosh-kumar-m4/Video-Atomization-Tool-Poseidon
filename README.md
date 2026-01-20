@@ -12,8 +12,9 @@ This tool processes long-form videos (10-30 minutes) and automatically:
 
 ## Tech Stack
 
-- **Frontend:** Angular
-- **Backend:** Node.js + Express
+- **Framework:** Next.js 16 (App Router)
+- **Frontend:** React 19 + TypeScript
+- **Backend:** Next.js API Routes
 - **Database:** PostgreSQL (using Neon for easy setup)
 - **Video Processing:** ffmpeg
 - **AI:** Groq (Whisper for transcription), OpenRouter (GPT-OSS-20B for moment detection)
@@ -22,11 +23,18 @@ This tool processes long-form videos (10-30 minutes) and automatically:
 
 ```
 Video-Atomization-Tool-Poseidon/
-├── video-atomization-frontend/  # Angular frontend
-├── backend/                      # Node.js backend API
-│   ├── src/                      # Source code (routes, controllers, etc)
-│   ├── uploads/                  # Uploaded videos
-│   └── clips/                    # Generated clips
+├── nextjs-app/                    # Next.js application
+│   ├── app/                       # Next.js App Router
+│   │   ├── api/                   # API routes
+│   │   ├── page.tsx               # Home page
+│   │   ├── upload/                # Upload page
+│   │   └── videos/[id]/           # Video details page
+│   ├── lib/                       # Shared libraries
+│   │   ├── db/                    # Database config & schema
+│   │   ├── services/              # Business logic (transcript, moments, clips)
+│   │   └── utils/                 # Utility functions
+│   ├── uploads/                   # Uploaded videos
+│   └── clips/                     # Generated clips
 └── README.md
 ```
 
@@ -40,11 +48,11 @@ Video-Atomization-Tool-Poseidon/
 - OpenRouter API key (free) - for moment detection
 - Optional: OpenAI API key (if you prefer paid models)
 
-### Backend Setup
+### Installation
 
-1. Navigate to backend directory:
+1. Navigate to the Next.js app directory:
 ```bash
-cd backend
+cd nextjs-app
 ```
 
 2. Install dependencies:
@@ -52,9 +60,8 @@ cd backend
 npm install
 ```
 
-3. Create `.env` file (copy from `.env.example`):
+3. Create `.env.local` file in the `nextjs-app` directory:
 ```bash
-PORT=3000
 DATABASE_URL=postgresql://user:password@localhost:5432/video_atomization
 UPLOAD_DIR=./uploads
 CLIPS_DIR=./clips
@@ -76,65 +83,53 @@ OPENAI_API_KEY=your_openai_api_key_here
 npm run db:init
 ```
 
-5. Start the server:
+5. Start the development server:
 ```bash
 npm run dev
 ```
 
-### Frontend Setup
-
-1. Navigate to frontend directory:
-```bash
-cd video-atomization-frontend
-```
-
-2. Install dependencies:
-```bash
-npm install
-```
-
-3. Start development server:
-```bash
-npm start
-```
+The application will be available at `http://localhost:3000`
 
 ## Architecture
 
 ### System Overview
 
-The application follows a client-server architecture with a clear separation between frontend and backend:
+The application follows a Next.js full-stack architecture:
 
 ```
-┌─────────────┐         ┌──────────────┐         ┌─────────────┐
-│   Angular   │ ──────> │   Express    │ ──────> │  PostgreSQL │
-│  Frontend   │  HTTP   │    Backend    │  SQL    │  (Neon DB)  │
-└─────────────┘         └──────────────┘         └─────────────┘
-                              │
-                              ├──> Groq API (Whisper transcription)
-                              ├──> OpenRouter API (Moment detection)
-                              └──> FFmpeg (Video Processing)
+┌─────────────┐         ┌─────────────┐
+│   Next.js   │ ──────> │  PostgreSQL │
+│   App Router │  SQL    │  (Neon DB)  │
+│  (React UI)  │         └─────────────┘
+└─────────────┘              │
+     │                       │
+     ├──> API Routes          │
+     │    (Next.js)          │
+     │                       │
+     ├──> Groq API (Whisper transcription)
+     ├──> OpenRouter API (Moment detection)
+     └──> FFmpeg (Video Processing)
 ```
 
 ### Tech Stack Decisions
 
-**Frontend: Angular (instead of Next.js)**
-- Chose Angular over Next.js for this project because:
-  - Better fit for the team's existing experience
-  - Strong component-based architecture for dashboard UI
-  - Built-in dependency injection and services
-  - TypeScript-first approach aligns with backend patterns
-  - The assignment emphasizes "working pipeline" over specific framework choice
-
-**Backend: Node.js + Express**
-- RESTful API design
-- Service layer pattern for business logic
-- Database connection pooling with `pg`
-- File handling with Multer
+**Framework: Next.js**
+- Full-stack framework with built-in API routes
+- Server-side rendering and client-side interactivity
+- TypeScript-first approach
+- File-based routing with App Router
+- Integrated development experience
 
 **Database: PostgreSQL (Neon)**
 - Relational data model (videos, transcripts, clips)
 - Foreign key constraints with CASCADE deletes
 - Indexes on frequently queried columns
+- Cloud-hosted option with Neon for easy setup
+
+**Video Processing: FFmpeg**
+- Industry-standard video processing
+- Supports multiple formats and codecs
+- Efficient clip generation with scaling and padding
 
 ### Data Flow
 
@@ -142,7 +137,7 @@ The application follows a client-server architecture with a clear separation bet
 2. **Transcription**: Video sent to Groq Whisper → Transcript stored in DB
 3. **Moment Detection**: Transcript analyzed by OpenRouter (GPT-OSS-20B) → Key moments identified → Clips created in DB
 4. **Clip Generation**: FFmpeg processes video → Generates 16:9 and 9:16 formats → Files saved to `clips/`
-5. **Download**: User requests clip → Backend serves file from `clips/` directory
+5. **Download**: User requests clip → API route serves file from `clips/` directory
 
 ### Database Schema
 
@@ -152,17 +147,19 @@ The application follows a client-server architecture with a clear separation bet
 
 ### API Endpoints
 
+All endpoints are Next.js API routes under `/api`:
+
 - `POST /api/videos/upload` - Upload video
 - `GET /api/videos` - List all videos
-- `GET /api/videos/:id` - Get video details
-- `DELETE /api/videos/:id` - Delete video
-- `POST /api/transcripts/:videoId/generate` - Generate transcript
-- `GET /api/transcripts/:videoId` - Get transcript
-- `POST /api/moments/:videoId/detect` - Detect key moments
-- `GET /api/moments/:videoId` - Get moments
-- `POST /api/clips/:videoId/generate` - Generate all clips
-- `GET /api/clips/:videoId` - Get clips for video
-- `GET /api/clips/:clipId/download/:format` - Download clip (horizontal/vertical)
+- `GET /api/videos/[id]` - Get video details
+- `DELETE /api/videos/[id]` - Delete video
+- `POST /api/transcripts/[videoId]` - Generate transcript
+- `GET /api/transcripts/[videoId]` - Get transcript
+- `POST /api/moments/[videoId]` - Detect key moments
+- `GET /api/moments/[videoId]` - Get moments
+- `POST /api/clips/[videoId]` - Generate all clips
+- `GET /api/clips/[videoId]` - Get clips for video
+- `GET /api/clips/[clipId]/download/[format]` - Download clip (horizontal/vertical)
 
 ### Trade-offs & Assumptions
 
@@ -286,7 +283,7 @@ The system prompt sets context: "You are a video editor. Find the most interesti
 - Proper error handling
 - Input validation
 - Clean code structure
-- Comprehensive documentation
+- TypeScript throughout
 
 ## Next Steps (Future Enhancements)
 
