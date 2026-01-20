@@ -283,7 +283,6 @@ The system prompt sets context: "You are a video editor. Find the most interesti
 - File size and type validation
 
 ✅ **Code Quality:**
-- Human-like code style (2.7 years experience level)
 - Proper error handling
 - Input validation
 - Clean code structure
