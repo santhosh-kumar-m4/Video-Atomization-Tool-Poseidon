@@ -9,12 +9,8 @@ let openaiClient: OpenAI | null = null;
 
 if (useOpenRouter) {
   openRouterClient = new OpenRouter({
-    apiKey: process.env.OPENROUTER_API_KEY,
-    defaultHeaders: {
-      'HTTP-Referer': process.env.APP_URL || 'http://localhost:3000',
-      'X-Title': 'Video Atomization Tool'
-    }
-  });
+    apiKey: process.env.OPENROUTER_API_KEY
+  } as any);
 } else {
   openaiClient = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY
@@ -48,7 +44,7 @@ ${transcriptText}
   }
 ]
 
-Just return the JSON array, nothing else.`;
+Return a JSON array like this.`;
 
   let content: string;
   
@@ -68,10 +64,19 @@ Just return the JSON array, nothing else.`;
         }
       ],
       temperature: 0.7,
-      max_tokens: 1000
-    });
+      maxTokens: 1000,
+      headers: {
+        'HTTP-Referer': process.env.APP_URL || 'http://localhost:3000',
+        'X-Title': 'Video Atomization Tool'
+      }
+    } as any);
     
-    content = completion.choices[0].message.content.trim();
+    const messageContent = completion.choices[0]?.message?.content;
+    if (typeof messageContent === 'string') {
+      content = messageContent.trim();
+    } else {
+      throw new Error('Invalid response format from OpenRouter');
+    }
   } else if (openaiClient) {
     const response = await openaiClient.chat.completions.create({
       model: 'gpt-4',
@@ -89,7 +94,12 @@ Just return the JSON array, nothing else.`;
       max_tokens: 1000
     });
     
-    content = response.choices[0].message.content.trim();
+    const messageContent = response.choices[0]?.message?.content;
+    if (messageContent && typeof messageContent === 'string') {
+      content = messageContent.trim();
+    } else {
+      throw new Error('Invalid response format from OpenAI');
+    }
   } else {
     throw new Error('No AI client configured');
   }
