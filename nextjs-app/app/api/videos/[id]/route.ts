@@ -8,6 +8,13 @@ export async function GET(
 ) {
   try {
     const id = parseInt(params.id);
+    if (isNaN(id)) {
+      return NextResponse.json(
+        { error: 'Invalid video ID' },
+        { status: 400 }
+      );
+    }
+    
     const result = await pool.query('SELECT * FROM videos WHERE id = $1', [id]);
     
     if (result.rows.length === 0) {
@@ -37,6 +44,12 @@ export async function DELETE(
 ) {
   try {
     const videoId = parseInt(params.id);
+    if (isNaN(videoId)) {
+      return NextResponse.json(
+        { error: 'Invalid video ID' },
+        { status: 400 }
+      );
+    }
 
     const result = await pool.query(
       'SELECT * FROM videos WHERE id = $1',
