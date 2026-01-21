@@ -72,7 +72,7 @@ GROQ_API_KEY=your_groq_api_key_here
 USE_OPENROUTER=true
 OPENROUTER_API_KEY=your_openrouter_api_key_here
 OPENROUTER_MODEL=openai/gpt-oss-20b:free
-APP_URL=http://localhost:3000
+APP_URL=http://localhost:4201
 
 # Optional: OpenAI (if you prefer paid models)
 OPENAI_API_KEY=your_openai_api_key_here
@@ -88,7 +88,7 @@ npm run db:init
 npm run dev
 ```
 
-The application will be available at `http://localhost:3000`
+The application will be available at `http://localhost:4201`
 
 ## Architecture
 
@@ -159,7 +159,7 @@ All endpoints are Next.js API routes under `/api`:
 - `GET /api/moments/[videoId]` - Get moments
 - `POST /api/clips/[videoId]` - Generate all clips
 - `GET /api/clips/[videoId]` - Get clips for video
-- `GET /api/clips/[clipId]/download/[format]` - Download clip (horizontal/vertical)
+- `GET /api/clips/download/[id]/[format]` - Download clip (horizontal/vertical)
 
 ### Trade-offs & Assumptions
 
