@@ -12,17 +12,51 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+body {
+  background: #f5f5f5;
+  color: #333;
+  font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+  padding: 0;
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Hide Next.js dev indicator and overlay */
+__next-build-indicator,
+nextjs-portal,
+[data-nextjs-dialog],
+[data-nextjs-dialog-overlay],
+#__next-build-watcher,
+div[style*="position: fixed"][style*="bottom"][style*="left"] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* Hide any fixed position indicators in bottom left */
+body > div[style*="position: fixed"]:last-child {
+  display: none !important;
+}
+
+/* Ensure text is visible on light background */
+.video-list-container,
+.video-details-container,
+.upload-container {
+  color: #333;
+}
+
+.video-info-section h2,
+.pipeline-section h2 {
+  color: #333;
+}
+
+.info-item .label {
+  color: #666;
+  font-weight: 600;
+}
+
+.info-item span:not(.label) {
+  color: #333;
 }
 
 .video-list-container {
@@ -41,6 +75,7 @@ body {
 .header h1 {
   margin: 0;
   font-size: 2rem;
+  color: #333;
 }
 
 .btn-primary {
@@ -114,6 +149,7 @@ body {
   padding: 1.5rem;
   cursor: pointer;
   transition: box-shadow 0.2s, transform 0.2s;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .video-card:hover {
@@ -133,6 +169,7 @@ body {
   font-size: 1.1rem;
   flex: 1;
   word-break: break-word;
+  color: #333;
 }
 
 .status-badge {
@@ -185,7 +222,11 @@ body {
 
 .info-label {
   font-weight: 600;
-  color: #666;
+  color: #333;
+}
+
+.video-info span:not(.info-label) {
+  color: #333;
 }
 
 .video-card-actions {

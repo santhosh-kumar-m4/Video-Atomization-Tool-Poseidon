@@ -5,11 +5,11 @@ import path from 'path';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { clipId: string; format: string } }
+  { params }: { params: Promise<{ id: string; format: string }> }
 ) {
   try {
-    const clipId = parseInt(params.clipId);
-    const format = params.format;
+    const { id: idParam, format } = await params;
+    const clipId = parseInt(idParam);
 
     if (isNaN(clipId)) {
       return NextResponse.json(

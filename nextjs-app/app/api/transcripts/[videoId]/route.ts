@@ -4,10 +4,11 @@ import { generateTranscript, getTranscript } from '@/lib/services/transcript';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { videoId: string } }
+  { params }: { params: Promise<{ videoId: string }> }
 ) {
   try {
-    const videoId = parseInt(params.videoId);
+    const { videoId: videoIdParam } = await params;
+    const videoId = parseInt(videoIdParam);
     if (isNaN(videoId)) {
       return NextResponse.json(
         { error: 'Invalid video ID' },
@@ -56,10 +57,11 @@ export async function POST(
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { videoId: string } }
+  { params }: { params: Promise<{ videoId: string }> }
 ) {
   try {
-    const videoId = parseInt(params.videoId);
+    const { videoId: videoIdParam } = await params;
+    const videoId = parseInt(videoIdParam);
     if (isNaN(videoId)) {
       return NextResponse.json(
         { error: 'Invalid video ID' },

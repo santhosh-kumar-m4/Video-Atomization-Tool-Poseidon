@@ -17,7 +17,7 @@ interface Video {
 export default function Home() {
   const router = useRouter();
   const [videos, setVideos] = useState<Video[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
@@ -60,35 +60,23 @@ export default function Home() {
 
   const formatDate = (dateString: string): string => {
     if (!dateString) return 'N/A';
-    let date: Date;
     
-    if (dateString.includes('Z') || dateString.includes('+') || dateString.includes('-', 10)) {
-      date = new Date(dateString);
-    } else {
-      date = new Date(dateString + 'Z');
+    const date = new Date(dateString);
+    
+    if (isNaN(date.getTime())) {
+      return 'N/A';
     }
     
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    
-    if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
-    
-    const diffHours = Math.floor(diffMins / 60);
-    if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
-    
-    const diffDays = Math.floor(diffHours / 24);
-    if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+    const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     
     return date.toLocaleString('en-IN', { 
       month: 'short', 
       day: 'numeric', 
-      year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined,
+      year: 'numeric',
       hour: 'numeric',
       minute: '2-digit',
       hour12: true,
-      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+      timeZone: userTimezone
     });
   };
 

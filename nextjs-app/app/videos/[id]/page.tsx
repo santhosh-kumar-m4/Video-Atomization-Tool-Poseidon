@@ -49,8 +49,9 @@ export default function VideoDetailsPage() {
   const [moments, setMoments] = useState<Moment[]>([]);
   const [clips, setClips] = useState<Clip[]>([]);
   
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [dataLoaded, setDataLoaded] = useState(false);
   
   const [isGeneratingTranscript, setIsGeneratingTranscript] = useState(false);
   const [isDetectingMoments, setIsDetectingMoments] = useState(false);
@@ -76,49 +77,54 @@ export default function VideoDetailsPage() {
   const loadVideoDetails = async (id: number) => {
     setIsLoading(true);
     setError(null);
+    setDataLoaded(false);
 
     try {
-      const response = await fetch(`/api/videos/${id}`);
-      if (!response.ok) {
+      const [videoRes, transcriptRes, momentsRes, clipsRes] = await Promise.all([
+        fetch(`/api/videos/${id}`),
+        fetch(`/api/transcripts/${id}`),
+        fetch(`/api/moments/${id}`),
+        fetch(`/api/clips/${id}`)
+      ]);
+
+      if (!videoRes.ok) {
         throw new Error('Failed to load video');
       }
-      const data = await response.json();
-      setVideo(data.video);
-      loadTranscript(id);
-      loadMoments(id);
-      loadClips(id);
+
+      const videoData = await videoRes.json();
+      setVideo(videoData.video);
+
+      if (transcriptRes.ok) {
+        const transcriptData = await transcriptRes.json();
+        if (transcriptData.success && transcriptData.transcript) {
+          setTranscript(transcriptData.transcript);
+        }
+      }
+
+      if (momentsRes.ok) {
+        const momentsData = await momentsRes.json();
+        if (momentsData.success) {
+          setMoments(momentsData.moments || []);
+        }
+      } else {
+        setMoments([]);
+      }
+
+      if (clipsRes.ok) {
+        const clipsData = await clipsRes.json();
+        if (clipsData.success) {
+          setClips(clipsData.clips || []);
+        }
+      } else {
+        setClips([]);
+      }
+
+      setDataLoaded(true);
     } catch (err) {
       setError('Failed to load video');
       console.error('Error loading video:', err);
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const loadTranscript = async (id: number) => {
-    try {
-      const response = await fetch(`/api/transcripts/${id}`);
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success && data.transcript) {
-          setTranscript(data.transcript);
-        }
-      }
-    } catch (err) {
-    }
-  };
-
-  const loadMoments = async (id: number) => {
-    try {
-      const response = await fetch(`/api/moments/${id}`);
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success) {
-          setMoments(data.moments || []);
-        }
-      }
-    } catch (err) {
-      setMoments([]);
     }
   };
 
@@ -283,13 +289,14 @@ export default function VideoDetailsPage() {
 
   const formatDate = (dateString: string): string => {
     if (!dateString) return 'N/A';
-    let date: Date;
     
-    if (dateString.includes('Z') || dateString.includes('+') || dateString.includes('-', 10)) {
-      date = new Date(dateString);
-    } else {
-      date = new Date(dateString + 'Z');
+    const date = new Date(dateString);
+    
+    if (isNaN(date.getTime())) {
+      return 'N/A';
     }
+    
+    const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     
     return date.toLocaleString('en-IN', {
       month: 'short',
@@ -298,7 +305,7 @@ export default function VideoDetailsPage() {
       hour: 'numeric',
       minute: '2-digit',
       hour12: true,
-      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+      timeZone: userTimezone
     });
   };
 
@@ -328,11 +335,11 @@ export default function VideoDetailsPage() {
 
   const downloadClip = (clipId: number, format: 'horizontal' | 'vertical', e: React.MouseEvent) => {
     e.stopPropagation();
-    const url = `/api/clips/${clipId}/download/${format}`;
+    const url = `/api/clips/download/${clipId}/${format}`;
     window.open(url, '_blank');
   };
 
-  if (isLoading) {
+  if (isLoading || !dataLoaded) {
     return (
       <div className="video-details-container">
         <div className="loading">Loading video details...</div>
@@ -344,6 +351,7 @@ export default function VideoDetailsPage() {
     return (
       <div className="video-details-container">
         <div className="error">{error || 'Video not found'}</div>
+        <Link href="/" className="btn-back" style={{ marginTop: '1rem', display: 'inline-block' }}>← Back to Videos</Link>
       </div>
     );
   }

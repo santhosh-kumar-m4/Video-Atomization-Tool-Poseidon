@@ -5,6 +5,8 @@ import pool from '@/lib/db/config';
 import { getVideoDuration } from '@/lib/utils/videoMetadata';
 
 export async function POST(request: NextRequest) {
+  const uploadTimestamp = new Date();
+  
   try {
     const uploadDir = process.env.UPLOAD_DIR || path.join(process.cwd(), 'uploads');
     if (!fs.existsSync(uploadDir)) {
@@ -56,12 +58,11 @@ export async function POST(request: NextRequest) {
       console.error('Failed to extract duration:', durationError);
     }
 
-    const now = new Date().toISOString();
     const result = await pool.query(
       `INSERT INTO videos (filename, original_filename, file_path, file_size, duration, status, created_at)
        VALUES ($1, $2, $3, $4, $5, $6, $7)
        RETURNING id, filename, original_filename, file_size, duration, status, created_at`,
-      [filename, file.name, filePath, file.size, duration, 'uploaded', now]
+      [filename, file.name, filePath, file.size, duration, 'uploaded', uploadTimestamp]
     );
 
     const video = result.rows[0];
