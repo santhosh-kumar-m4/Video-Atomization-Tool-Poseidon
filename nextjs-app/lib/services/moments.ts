@@ -117,6 +117,10 @@ Return a JSON array like this.`;
     throw new Error('Failed to parse moment detection results');
   }
 
+  if (!Array.isArray(moments) || moments.length === 0) {
+    throw new Error('No moments detected');
+  }
+
   const savedMoments = [];
   for (const moment of moments) {
     if (!moment.title || !moment.start_time || !moment.end_time) {

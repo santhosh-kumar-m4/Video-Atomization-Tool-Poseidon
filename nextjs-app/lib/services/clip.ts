@@ -16,10 +16,10 @@ export async function generateClip(clipId: number, videoPath: string, startTime:
 
   const duration = endTime - startTime;
   const cleanTitle = title.replace(/[^a-zA-Z0-9]/g, '_').substring(0, 50);
-  const ts = Date.now();
+  const timestamp = Date.now();
 
-  const hFile = `clip-${clipId}-${cleanTitle}-${ts}-h.mp4`;
-  const vFile = `clip-${clipId}-${cleanTitle}-${ts}-v.mp4`;
+  const hFile = `clip-${clipId}-${cleanTitle}-${timestamp}-h.mp4`;
+  const vFile = `clip-${clipId}-${cleanTitle}-${timestamp}-v.mp4`;
   
   const hPath = path.join(clipsDir, hFile);
   const vPath = path.join(clipsDir, vFile);

@@ -9,7 +9,7 @@ export async function GET() {
     
     const videos = result.rows.map(video => ({
       ...video,
-      created_at: video.created_at ? new Date(video.created_at).toISOString() : video.created_at
+      created_at: video.created_at ? new Date(video.created_at).toISOString() : null
     }));
     
     return NextResponse.json({ videos });

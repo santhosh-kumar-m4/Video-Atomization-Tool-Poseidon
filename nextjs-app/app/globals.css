@@ -20,7 +20,6 @@ body {
   padding: 0;
 }
 
-/* Hide Next.js dev indicator and overlay */
 __next-build-indicator,
 nextjs-portal,
 [data-nextjs-dialog],
@@ -33,12 +32,10 @@ div[style*="position: fixed"][style*="bottom"][style*="left"] {
   pointer-events: none !important;
 }
 
-/* Hide any fixed position indicators in bottom left */
 body > div[style*="position: fixed"]:last-child {
   display: none !important;
 }
 
-/* Ensure text is visible on light background */
 .video-list-container,
 .video-details-container,
 .upload-container {
